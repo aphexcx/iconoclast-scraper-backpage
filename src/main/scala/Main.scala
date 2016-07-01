@@ -20,6 +20,8 @@ object Main extends App {
 
   val title: String = doc >> element("h1") text
 
+  val text: String = doc >> element("div.postingBody") text
+
   println()
 
 }
