@@ -18,6 +18,8 @@ object Main extends App {
 
   val age: Int = (doc >> element(".metaInfoDisplay") text) filter (_.isDigit) toInt
 
-    println()
+  val title: String = doc >> element("h1") text
+
+  println()
 
 }
