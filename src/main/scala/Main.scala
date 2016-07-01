@@ -16,6 +16,8 @@ object Main extends App {
   // Extract the image Urls
   val imageUrls: List[String] = doc >> elementList("ul#viewAdPhotoLayout") >> elementList("li") flatMap (_ >> elementList("img")) flatMap (_ >> attr("src")("img"))
 
+  val age: Int = (doc >> element(".metaInfoDisplay") text) filter (_.isDigit) toInt
+
     println()
 
 }
