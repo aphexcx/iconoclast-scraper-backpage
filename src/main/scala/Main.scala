@@ -2,6 +2,7 @@ import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 
 /**
@@ -22,5 +23,9 @@ object Main extends App {
   val text: String = doc >> element("div.postingBody") text
 
   println()
+
+  Api.postAd(Ad(imageUrls, age, title, text)) onComplete (r => {
+    println(r)
+  })
 
 }
