@@ -1,7 +1,6 @@
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL._
-import net.ruippeixotog.scalascraper.model.Element
 
 import scala.language.postfixOps
 
@@ -16,9 +15,9 @@ object Main extends App {
   // Extract the image Urls
   val imageUrls: List[String] = doc >> elementList("ul#viewAdPhotoLayout") >> elementList("li") flatMap (_ >> elementList("img")) flatMap (_ >> attr("src")("img"))
 
-  val age: Int = (doc >> element(".metaInfoDisplay") text) filter (_.isDigit) toInt
+  val age: Int = (doc >> element("p.metaInfoDisplay") text) filter (_.isDigit) toInt
 
-  val title: String = doc >> element("h1") text
+  val title: String = doc >> element("div#postingTitle") >> element("a.h1link") text
 
   val text: String = doc >> element("div.postingBody") text
 
