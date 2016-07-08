@@ -5,26 +5,58 @@ import net.ruippeixotog.scalascraper.dsl.DSL._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 
-/**
+/** A Backpage scraper for Iconoclast.
+  *
+  * "Among those that report being advertised online, Backpage is the most common website used -
+  * with almost half reporting they were advertised on Backpage."
+  *
+  * -- A REPORT ON THE USE OF TECHNOLOGY TO RECRUIT, GROOM AND SELL DOMESTIC MINOR SEX TRAFFICKING VICTIMS
+  * https://www.wearethorn.org/wp-content/uploads/2015/02/Survivor_Survey_r5.pdf
+  *
   * Created by aphex on 7/1/16.
   */
+
 object Main extends App {
-  val browser = JsoupBrowser()
-  val HOME = "http://sfbay.backpage.com/FemaleEscorts/two-girlsdouble-the-actioncall-if-your-alone-or-with-a-friend/33710143"
-  val doc = browser.get(HOME)
+  val HOME = "http://www.backpage.com"
+  val cities: List[String] = getCities
+  val categories: Seq[String] = Seq("MaleEscorts", "FemaleEscorts")
+  val mainBrowser = JsoupBrowser()
 
-  // Extract the image Urls
-  val imageUrls: List[String] = doc >> elementList("ul#viewAdPhotoLayout") >> elementList("li") flatMap (_ >> elementList("img")) flatMap (_ >> attr("src")("img"))
+  val allAdsInTheWorld: Stream[String] = {
+    val urls: List[String] =
+      for {city <- cities
+           category <- categories
+           page <- 1 to 100
+      } yield s"$city$category/?layout=gallery&page=$page"
 
-  val age: Int = (doc >> element("p.metaInfoDisplay") text) filter (_.isDigit) toInt
+    urls.toStream flatMap {
+      mainBrowser.get(_) >> elementList("div.galleryHeader") >> attr("href")("a")
+    }
+  }
 
-  val title: String = doc >> element("div#postingTitle") >> element("a.h1link") text
+  def getCities: List[String] = {
+    val browser = JsoupBrowser()
+    val doc = browser.get(HOME)
 
-  val text: String = doc >> element("div.postingBody") text
+    doc >> elementList("a") >> attr("href")("a") filterNot (_.contains("/classifieds/")) filterNot (_.contains("my.backpage.com"))
+  }
 
-  println()
+  def extractAd(url: String): Ad = {
+    val browser = JsoupBrowser()
+    val doc = browser.get(url)
 
-  Api.postAd(Ad(imageUrls, age, title, text)) onComplete (r => {
+    val imageUrls: List[String] = doc >> elementList("ul#viewAdPhotoLayout") >> elementList("li") flatMap (_ >> elementList("img")) flatMap (_ >> attr("src")("img"))
+
+    val age: Int = (doc >> element("p.metaInfoDisplay") text) filter (_.isDigit) toInt
+
+    val title: String = doc >> element("div#postingTitle") >> element("a.h1link") text
+
+    val text: String = doc >> element("div.postingBody") text
+
+    Ad(imageUrls, age, title, text)
+  }
+
+  Api.postAd(extractAd(allAdsInTheWorld.head)) onComplete (r => {
     println(r)
   })
 
