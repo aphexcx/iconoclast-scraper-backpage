@@ -16,7 +16,13 @@ object AdJsonProtocol extends DefaultJsonProtocol {
 import AdJsonProtocol._
 
 object Api {
-  val apiLocation = "http://localhost:9000/api"
+  lazy val IN_DOCKER: Boolean = !System.getProperty("os.name").contains("Mac OS X")
+
+  val apiLocation = if (IN_DOCKER) {
+    "http://api:9000/api"
+  } else {
+    "http://localhost:9000/api"
+  }
   val timeout = 5.seconds
 
   //Spray needs an implicit ActorSystem and ExecutionContext
