@@ -1,8 +1,8 @@
+import akka.actor.{ActorSystem, Props}
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 
 /** A Backpage scraper for Iconoclast.
@@ -41,23 +41,9 @@ object Main extends App {
     doc >> elementList("a") >> attr("href")("a") filterNot (_.contains("/classifieds/")) filterNot (_.contains("my.backpage.com"))
   }
 
-  def extractAd(url: String): Ad = {
-    val browser = JsoupBrowser()
-    val doc = browser.get(url)
+  val system = ActorSystem("AdExtractors")
 
-    val imageUrls: List[String] = doc >> elementList("ul#viewAdPhotoLayout") >> elementList("li") flatMap (_ >> elementList("img")) flatMap (_ >> attr("src")("img"))
-
-    val age: Int = (doc >> element("p.metaInfoDisplay") text) filter (_.isDigit) toInt
-
-    val title: String = doc >> element("div#postingTitle") >> element("a.h1link") text
-
-    val text: String = doc >> element("div.postingBody") text
-
-    Ad(imageUrls, age, title, text)
-  }
-
-  Api.postAd(extractAd(allAdsInTheWorld.head)) onComplete (r => {
-    println(r)
-  })
-
+  allAdsInTheWorld.foreach(url =>
+    system.actorOf(Props[AdExtractor], name = url.filter(_ != '/')) ! AdUrl(url)
+  )
 }
