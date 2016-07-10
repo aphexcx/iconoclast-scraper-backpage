@@ -25,16 +25,29 @@ object Main extends App {
   val mainBrowser = JsoupBrowser()
 
   val allAdsInTheWorld: Stream[String] = {
-    val urls: List[String] =
+    val galleryUrls: Seq[String] =
       for {city <- cities
            category <- categories
-           page <- 1 to 100
-      } yield s"$city$category/?layout=gallery&page=$page"
+      } yield s"$city$category/?layout=gallery"
 
-    val validAds: Stream[Try[Document]] = urls.toStream map (s => Try(mainBrowser.get(s))) filter (_.isSuccess)
+    val validAdUrls: Stream[Document] = galleryUrls.toStream flatMap { galleryUrl =>
+      val adUrls: Seq[String] = for {
+        page <- 1 to 100
+      } yield {
+        if (page > 1) s"$galleryUrl&page=$page"
+        else s"$galleryUrl"
+      }
 
-    validAds flatMap (_.get >> elementList("div.galleryHeader") >> attr("href")("a"))
+      adUrls.toStream
+        .map { url => Try(mainBrowser.get(url)) <| { t: Try[Document] => println(url + " " + t.isSuccess) } }
+        .takeWhile(_.isSuccess)
+        .filter(_.isSuccess)
+        .map(_.get)
+    }
+
+    validAdUrls.flatMap { doc: Document => doc >> elementList("div.galleryHeader") >> attr("href")("a") }
   }
+
   val system = ActorSystem("AdExtractors")
 
   def getCities: List[String] = {

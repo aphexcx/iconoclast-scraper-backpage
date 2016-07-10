@@ -19,6 +19,8 @@ class AdExtractor extends Actor {
   }
 
   def extractAd(url: String): Ad = {
+    println("scraping..." + url)
+
     val doc: Document = browser.get(url)
 
     val imageUrls: List[String] = doc >> elementList("ul#viewAdPhotoLayout") >> elementList("li") flatMap (_ >> elementList("img")) flatMap (_ >> attr("src")("img"))
