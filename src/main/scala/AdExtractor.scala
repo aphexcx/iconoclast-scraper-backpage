@@ -29,6 +29,6 @@ class AdExtractor extends Actor {
 
     val text: String = doc >> element("div.postingBody") text
 
-    Ad(imageUrls, age, title, text)
+    Ad(url, imageUrls, age, title, text)
   }
 }

@@ -7,10 +7,10 @@ import spray.json.DefaultJsonProtocol
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-case class Ad(imageUrls: List[String], age: Int, title: String, text: String)
+case class Ad(url: String, imageUrls: List[String], age: Int, title: String, text: String)
 
 object AdJsonProtocol extends DefaultJsonProtocol {
-  implicit val adFormat = jsonFormat4(Ad)
+  implicit val adFormat = jsonFormat5(Ad)
 }
 
 import AdJsonProtocol._
