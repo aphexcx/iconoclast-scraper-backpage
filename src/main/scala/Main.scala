@@ -2,8 +2,10 @@ import akka.actor.{ActorSystem, Props}
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL._
+import net.ruippeixotog.scalascraper.model.Document
 
 import scala.language.postfixOps
+import scala.util.Try
 
 /** A Backpage scraper for Iconoclast.
   *
@@ -29,10 +31,11 @@ object Main extends App {
            page <- 1 to 100
       } yield s"$city$category/?layout=gallery&page=$page"
 
-    urls.toStream flatMap {
-      mainBrowser.get(_) >> elementList("div.galleryHeader") >> attr("href")("a")
-    }
+    val validAds: Stream[Try[Document]] = urls.toStream map (s => Try(mainBrowser.get(s))) filter (_.isSuccess)
+
+    validAds flatMap (_.get >> elementList("div.galleryHeader") >> attr("href")("a"))
   }
+  val system = ActorSystem("AdExtractors")
 
   def getCities: List[String] = {
     val browser = JsoupBrowser()
@@ -40,8 +43,6 @@ object Main extends App {
 
     doc >> elementList("a") >> attr("href")("a") filterNot (_.contains("/classifieds/")) filterNot (_.contains("my.backpage.com"))
   }
-
-  val system = ActorSystem("AdExtractors")
 
   allAdsInTheWorld.foreach(url =>
     system.actorOf(Props[AdExtractor], name = url.filter(_ != '/')) ! AdUrl(url)
