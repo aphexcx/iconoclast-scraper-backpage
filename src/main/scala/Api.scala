@@ -1,19 +1,11 @@
+import AdJsonProtocol._
 import akka.actor.ActorSystem
 import spray.client.pipelining._
 import spray.http._
 import spray.httpx.SprayJsonSupport._
-import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
-case class Ad(url: String, imageUrls: List[String], age: Int, title: String, text: String)
-
-object AdJsonProtocol extends DefaultJsonProtocol {
-  implicit val adFormat = jsonFormat5(Ad)
-}
-
-import AdJsonProtocol._
 
 object Api {
   lazy val IN_DOCKER: Boolean = !System.getProperty("os.name").contains("Mac OS X")
@@ -41,5 +33,7 @@ object Api {
   //    )
 
   def postAd(ad: Ad): Future[HttpResponse] = pipeline(Post(s"$apiLocation/ad", ad))
+
+  //  def postImage(image: Image): Future[HttpResponse] = pipeline(Post(s"$apiLocation/image", image))
 
 }
