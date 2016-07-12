@@ -58,6 +58,6 @@ object Main extends App {
   }
 
   allAdsInTheWorld.foreach(url =>
-    system.actorOf(Props[AdExtractor], name = url.filter(_ != '/')) ! AdUrl(url)
+    system.actorOf(Props[AdExtractor]) ! AdUrl(url)
   )
 }
